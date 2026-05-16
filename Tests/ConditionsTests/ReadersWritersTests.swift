@@ -101,6 +101,36 @@ struct ReadersWritersTests {
         #expect(await flag.isSet == true)
     }
 
+    @Test func readersAreNotMutuallyExclusive() async throws {
+        let rwc = ReadersWritersCount()
+        let log = EventLog()
+
+        let taskA = Task {
+            await rwc.readerEnter()
+            await log.log("A-entered")
+            try? await Task.sleep(for: .milliseconds(100))
+            await log.log("A-exited")
+            await rwc.readerExit()
+        }
+
+        try await Task.sleep(for: .milliseconds(10))
+
+        let taskB = Task {
+            await rwc.readerEnter()
+            await log.log("B-entered")
+            await rwc.readerExit()
+        }
+
+        await taskA.value
+        await taskB.value
+
+        let events = await log.events
+        let aExitIndex = try #require(events.firstIndex(of: "A-exited"))
+        let bEnterIndex = try #require(events.firstIndex(of: "B-entered"))
+        // verifies B entered before A exited — proving the two readers overlapped rather than serializing.
+        #expect(bEnterIndex < aExitIndex)
+    }
+
     @Test func writersAreMutuallyExclusive() async throws {
         let rwc = ReadersWritersCount()
         let log = EventLog()
