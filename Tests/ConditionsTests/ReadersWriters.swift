@@ -1,0 +1,72 @@
+//
+//  ReadersWriters.swift
+//  Conditions
+//
+//  Created by Christopher Prince on 5/16/26.
+//
+
+import Conditions
+
+actor ReadersWritersCount {
+   private var numberReaders = 0
+   private var writers = false
+
+   // Writers wait on this if there are readers or writers
+   // Readers wait on this if there are writers
+   private var condition = Condition()
+
+   func writerEnter() async {
+       while writers || numberReaders > 0 {
+           await condition.wait()
+       }
+
+       // writers is false, numberReaders == 0
+       writers = true
+   }
+
+   func writerExit() async {
+       writers = false
+       await condition.notify()
+   }
+
+   func readerEnter() async {
+       while writers {
+           await condition.wait()
+       }
+
+       numberReaders += 1
+   }
+
+   func readerExit() async {
+       numberReaders -= 1
+       await condition.notify()
+   }
+}
+
+class ReaderWriter: @unchecked Sendable {
+   private var readersWritersCount = ReadersWritersCount()
+   private var internalData: [String: String] = [:]
+
+    func value(forKey key: String) async -> String? {
+        await readersWritersCount.readerEnter()
+        let result = internalData[key]
+        await readersWritersCount.readerExit()
+        return result
+    }
+
+    // A reader can take as long as they want to access the dictionary, using the closure.
+    // Other readers are still able to also use `readOnlyAccess` or `value` concurrently.
+    func readOnlyAccess(dictionary: ([String: String]) async -> ()) async {
+        await readersWritersCount.readerEnter()
+        await dictionary(internalData)
+        await readersWritersCount.readerExit()
+    }
+
+   // Isolated Write: Blocks other reads/writes during assignment
+   func set(value: String, forKey key: String) async {
+       await readersWritersCount.writerEnter()
+       internalData[key] = value
+       await readersWritersCount.writerExit()
+   }
+}
+
