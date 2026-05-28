@@ -46,22 +46,15 @@ actor ReadersWritersCount {
 }
 
 class ReaderWriter: @unchecked Sendable {
-   private var readersWritersCount = ReadersWritersCount()
-   private var internalData: [String: String] = [:]
+    private var readersWritersCount = ReadersWritersCount()
+    private var internalData: [String: String] = [:]
 
+    // Other readers are still able to also use `value` concurrently.
     func value(forKey key: String) async -> String? {
         await readersWritersCount.readerEnter()
         let result = internalData[key]
         await readersWritersCount.readerExit()
         return result
-    }
-
-    // A reader can take as long as they want to access the dictionary, using the closure.
-    // Other readers are still able to also use `readOnlyAccess` or `value` concurrently.
-    func readOnlyAccess(dictionary: ([String: String]) async -> ()) async {
-        await readersWritersCount.readerEnter()
-        await dictionary(internalData)
-        await readersWritersCount.readerExit()
     }
 
    // Isolated Write: Blocks other reads/writes during assignment

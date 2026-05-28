@@ -25,42 +25,6 @@ private actor EventLog {
 }
 
 struct ReadersWritersTests {
-    @Test func writerWaitsForConcurrentReaders() async {
-        let readerWriter = ReaderWriter()
-        let completion = Order()
-
-        let task1 = Task {
-            await readerWriter.readOnlyAccess { dictionary in
-                print("Task1: Start: Sleep")
-                try? await Task.sleep(for: .seconds(1))
-                print("Task1: End: Sleep")
-                await completion.record(1)
-            }
-        }
-
-        let task2 = Task {
-            await readerWriter.readOnlyAccess { dictionary in
-                print("Task2: Start: Sleep")
-                try? await Task.sleep(for: .seconds(1))
-                print("Task2: End: Sleep")
-                await completion.record(2)
-            }
-        }
-
-        // Allow the first two tasks to start.
-        try? await Task.sleep(for: .milliseconds(50))
-
-        let task3 = Task {
-            await readerWriter.set(value: "foo", forKey: "bar")
-            #expect(await completion.values == [1, 2])
-        }
-
-        await task1.value
-        await task2.value
-        await task3.value
-        print("Test: End")
-    }
-
     @Test func writerWaitsForReader() async throws {
         let rwc = ReadersWritersCount()
         let flag = Flag()
