@@ -20,5 +20,7 @@ In that actor, only a single reader can be active at a time. We might like, howe
 
 It is the purpose of the Condition actor provided by this package to allow for these kinds of solutions. See [the tests in this package](https://github.com/crspybits/Conditions/tree/main/Tests/ConditionsTests) for examples.
 
+Some feedback on this package and tests are [here on Stackoverflow](https://stackoverflow.com/questions/77457078/how-to-use-actors-to-allow-parallel-reads-but-block-concurrent-reads-and-writes/77462072#comment141064729_77462072).
+
 NOTES:
 * While https://developer.apple.com/videos/play/wwdc2021/10254/ suggests conditions should not be used, the conditions in the current Swift package are not `pthread_cond` or `NSCondition` conditions and are instead implemented as actors.

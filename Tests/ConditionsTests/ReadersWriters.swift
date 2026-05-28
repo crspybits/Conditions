@@ -7,6 +7,8 @@
 
 import Conditions
 
+// This is susceptible to writer starvation where there are a steady stream of readers, blocking a writer from doing its work.
+
 actor ReadersWritersCount {
    private var numberReaders = 0
    private var writers = false
