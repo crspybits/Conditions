@@ -46,29 +46,39 @@ struct ConditioningPerformanceTests {
         return Double(components.seconds) * 1_000_000 + Double(components.attoseconds) * 1e-12
     }
 
+    private static let allImplementations: [(name: String, implementation: Condition.Implementation)] = [
+        ("TaskCondition", .task),
+        ("StreamCondition", .stream),
+        ("ContinuationCondition", .continuation),
+    ]
+
     @Test
     func singleWaiterThroughputComparison() async throws {
-        let taskAverage = try await measureSingleWaiterThroughput(implementation: .task)
-        let streamAverage = try await measureSingleWaiterThroughput(implementation: .stream)
+        var results: [(name: String, microseconds: Double)] = []
+        for entry in Self.allImplementations {
+            let average = try await measureSingleWaiterThroughput(implementation: entry.implementation)
+            results.append((entry.name, microseconds(average)))
+        }
 
-        let taskUs = microseconds(taskAverage)
-        let streamUs = microseconds(streamAverage)
-        let (faster, fasterUs, slower, slowerUs) = taskUs <= streamUs
-            ? ("TaskCondition", taskUs, "StreamCondition", streamUs)
-            : ("StreamCondition", streamUs, "TaskCondition", taskUs)
-        let ratio = slowerUs / fasterUs
+        let sorted = results.sorted { $0.microseconds < $1.microseconds }
+        let fastest = sorted[0]
+        let nameWidth = (sorted.map(\.name.count).max() ?? 0)
 
-        print("""
+        var lines = [
+            "",
+            "==== Conditioning Performance: Single-Waiter Throughput ====",
+            "Iterations measured: \(Self.measuredIterations) (+ \(Self.warmupIterations) warm-up, discarded)",
+            "Settle delay per iteration: \(Self.settleDelay) (untimed; ensures waiter registration)",
+            "",
+        ]
+        for result in sorted {
+            let paddedName = result.name.padding(toLength: nameWidth, withPad: " ", startingAt: 0)
+            let ratio = result.microseconds / fastest.microseconds
+            let ratioText = result.name == fastest.name ? "(fastest)" : "\(String(format: "%.2f", ratio))x slower"
+            lines.append("\(paddedName): \(String(format: "%7.2f", result.microseconds)) µs/op  \(ratioText)")
+        }
+        lines.append("==============================================================")
 
-        ==== Conditioning Performance: Single-Waiter Throughput ====
-        Iterations measured: \(Self.measuredIterations) (+ \(Self.warmupIterations) warm-up, discarded)
-        Settle delay per iteration: \(Self.settleDelay) (untimed; ensures waiter registration)
-
-        TaskCondition:   \(String(format: "%.2f", taskUs)) µs/op
-        StreamCondition: \(String(format: "%.2f", streamUs)) µs/op
-
-        \(faster) is \(String(format: "%.2f", ratio))x faster than \(slower)
-        ==============================================================
-        """)
+        print(lines.joined(separator: "\n"))
     }
 }

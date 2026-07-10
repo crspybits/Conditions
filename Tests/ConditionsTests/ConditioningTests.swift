@@ -13,7 +13,7 @@ private actor Flag {
 
 @Suite
 struct ConditioningTests {
-    static let implementations: [Condition.Implementation] = [.task, .stream]
+    static let implementations: [Condition.Implementation] = [.task, .stream, .continuation]
 
     @Test(arguments: implementations)
     func notifyWithNoWaiters(implementation: Condition.Implementation) async {
