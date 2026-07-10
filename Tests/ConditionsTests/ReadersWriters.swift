@@ -15,7 +15,7 @@ actor ReadersWritersCount {
 
    // Writers wait on this if there are readers or writers
    // Readers wait on this if there are writers
-   private var condition = Condition()
+   private var condition = TaskCondition()
 
    func writerEnter() async {
        while writers || numberReaders > 0 {

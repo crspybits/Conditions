@@ -11,8 +11,8 @@ private actor Flag {
     func set() { isSet = true }
 }
 
-struct ConditionTests {
-    let condition = Condition()
+struct TaskConditionTests {
+    let condition = TaskCondition()
 
     @Test func notifyWithNoWaiters() async {
         await condition.notify()

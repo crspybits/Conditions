@@ -1,5 +1,5 @@
 //
-//  Conditions2Tests.swift
+//  StreamConditionTests.swift
 //  Conditions
 //
 //  Created by Christopher Prince on 7/9/26.
@@ -18,8 +18,8 @@ private actor Flag {
     func set() { isSet = true }
 }
 
-struct Condition2Tests: Sendable {
-    let condition = Condition2()
+struct StreamConditionTests: Sendable {
+    let condition = StreamCondition()
 
     @Test func notifyWithNoWaiters() async {
         await condition.notify()

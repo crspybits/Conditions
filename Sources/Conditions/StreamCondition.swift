@@ -1,5 +1,5 @@
 //
-//  Condition2.swift
+//  StreamCondition.swift
 //  Conditions
 //
 //  Created by Christopher Prince on 7/9/26.
@@ -9,7 +9,7 @@ import Synchronization
 
 // Modified from: https://losingfight.com/blog/2024/04/14/modeling-condition-variables-in-swift-asyncawait/
 
-public actor Condition2: Conditioning {
+public actor StreamCondition: Conditioning {
     private final class StreamWaiter: Sendable {
         let continuation: AsyncStream<Void>.Continuation
         let waiter: @Sendable () async  -> ()

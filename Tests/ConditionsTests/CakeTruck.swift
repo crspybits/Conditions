@@ -17,7 +17,7 @@ actor CakeTruck {
     private var numberPreparers = 0
     private var pendingOrders: [Int] = []
 
-    private var condition = Condition()
+    private var condition = TaskCondition()
 
     // At most 2 orders (maxPreparers) can be in preparation at one time.
     // Throws an error if the order number wasn't in the list of orders.
