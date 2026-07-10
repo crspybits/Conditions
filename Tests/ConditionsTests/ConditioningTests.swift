@@ -11,14 +11,19 @@ private actor Flag {
     func set() { isSet = true }
 }
 
-struct TaskConditionTests {
-    let condition = TaskCondition()
+@Suite
+struct ConditioningTests {
+    static let implementations: [Condition.Implementation] = [.task, .stream]
 
-    @Test func notifyWithNoWaiters() async {
+    @Test(arguments: implementations)
+    func notifyWithNoWaiters(implementation: Condition.Implementation) async {
+        let condition = Condition.create(implementation: implementation)
         await condition.notify()
     }
 
-    @Test func waitBlocksUntilNotified() async throws {
+    @Test(arguments: implementations)
+    func waitBlocksUntilNotified(implementation: Condition.Implementation) async throws {
+        let condition = Condition.create(implementation: implementation)
         let flag = Flag()
 
         let waiterTask = Task {
@@ -36,7 +41,9 @@ struct TaskConditionTests {
 
     // Registers 3 waiters sequentially (with delays to ensure registration order),
     // then notifies one at a time and confirms each completes before the next is woken.
-    @Test func fifoOrdering() async throws {
+    @Test(arguments: implementations)
+    func fifoOrdering(implementation: Condition.Implementation) async throws {
+        let condition = Condition.create(implementation: implementation)
         let order = Order()
 
         let task1 = Task { await condition.wait(); await order.record(1) }
@@ -53,10 +60,13 @@ struct TaskConditionTests {
         await condition.notify()
         _ = await task3.value
 
-        #expect(await order.values == [1, 2, 3])
+        let values = await order.values
+        #expect(values == [1, 2, 3])
     }
 
-    @Test func callerCancellationUnblocksWait() async throws {
+    @Test(arguments: implementations)
+    func callerCancellationUnblocksWait(implementation: Condition.Implementation) async throws {
+        let condition = Condition.create(implementation: implementation)
         let waiterTask = Task {
             await condition.wait()
         }
@@ -68,7 +78,9 @@ struct TaskConditionTests {
 
     // Cancels a registered waiter (leaving a stale ref in the queue),
     // then verifies notify() skips it and wakes the next live waiter.
-    @Test func cancelledWaiterSkippedByNotify() async throws {
+    @Test(arguments: implementations)
+    func cancelledWaiterSkippedByNotify(implementation: Condition.Implementation) async throws {
+        let condition = Condition.create(implementation: implementation)
         let waiterA = Task { await condition.wait() }
         try await Task.sleep(for: .milliseconds(50))
         waiterA.cancel()

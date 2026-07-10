@@ -6,7 +6,7 @@
 //
 
 // Allow a task to wait until notified.
-public protocol Conditioning {
+public protocol Conditioning: Sendable {
     func wait() async
     func notify() async
 }

@@ -1,12 +1,12 @@
 //
-//  Conditions.swift
+//  Condition.swift
 //  Conditions
 //
 //  Created by Christopher Prince on 7/10/26.
 //
 
-public struct Conditions {
-    public enum Implementation {
+public struct Condition {
+    public enum Implementation: Sendable {
         case task
         case stream
     }
