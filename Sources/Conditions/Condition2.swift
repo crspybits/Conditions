@@ -1,0 +1,61 @@
+//
+//  Condition2.swift
+//  Conditions
+//
+//  Created by Christopher Prince on 7/9/26.
+//
+
+import Synchronization
+
+// Modified from: https://losingfight.com/blog/2024/04/14/modeling-condition-variables-in-swift-asyncawait/
+
+public actor Condition2 {
+    private final class StreamWaiter: Sendable {
+        let continuation: AsyncStream<Void>.Continuation
+        let waiter: @Sendable () async  -> ()
+        // This is a `Mutex` to make `StreamWaiter` `Sendable`.
+        let isCancelled = Mutex<Bool>(false)
+
+        init() {
+            let (stream, continuation) = AsyncStream<Void>.makeStream()
+            self.continuation = continuation
+            self.waiter = {
+                for await _ in stream {}
+            }
+            continuation.onTermination = { [weak self] termination in
+                if case .cancelled = termination {
+                    self?.isCancelled.withLock { value in
+                        value = true
+                    }
+                }
+            }
+        }
+    }
+
+    public init() {}
+
+    private var refs = [StreamWaiter]()
+
+    /// Wait on the condition to become true
+    public func wait() async {
+        let streamWaiter = StreamWaiter()
+        refs += [streamWaiter]
+        await streamWaiter.waiter()
+    }
+
+    /// Signal the waiter (who has the Condition) that they're good to go
+    public func notify() {
+        while !refs.isEmpty {
+            let ref = refs.removeFirst()
+
+            // The check for cancellation is to deal with waiting tasks being cancelled. i.e., it's garbage collection.
+            let isCancelled = ref.isCancelled.withLock { value in
+                value
+            }
+            if !isCancelled {
+                ref.continuation.finish()
+                break
+            }
+        }
+    }
+}
