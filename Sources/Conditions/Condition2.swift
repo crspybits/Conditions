@@ -9,7 +9,7 @@ import Synchronization
 
 // Modified from: https://losingfight.com/blog/2024/04/14/modeling-condition-variables-in-swift-asyncawait/
 
-public actor Condition2 {
+public actor Condition2: Conditioning {
     private final class StreamWaiter: Sendable {
         let continuation: AsyncStream<Void>.Continuation
         let waiter: @Sendable () async  -> ()
@@ -36,15 +36,13 @@ public actor Condition2 {
 
     private var refs = [StreamWaiter]()
 
-    /// Wait on the condition to become true
     public func wait() async {
         let streamWaiter = StreamWaiter()
         refs += [streamWaiter]
         await streamWaiter.waiter()
     }
 
-    /// Signal the waiter (who has the Condition) that they're good to go
-    public func notify() {
+    public func notify() async {
         while !refs.isEmpty {
             let ref = refs.removeFirst()
 

@@ -1,7 +1,6 @@
 import Foundation
 
-// Allow a task to wait until notified.
-public actor Condition {
+public actor Condition: Conditioning {
     private var refs = [Task<(), Never>]()
 
     public init() {}
@@ -31,7 +30,7 @@ public actor Condition {
     // Wake up one waiting task.
     // Possible improvement: Could wake up *all* waiting tasks of a certain type.
     // e.g., wake up all readers in case numerous readers were waiting on a writer.
-    public func notify() {
+    public func notify() async {
         while !refs.isEmpty {
             let ref = refs.removeFirst()
 
