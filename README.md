@@ -22,7 +22,33 @@ It is the purpose of the Condition actors provided by this package to allow for 
 
 Some feedback on this package and tests are [here on Stackoverflow](https://stackoverflow.com/questions/77457078/how-to-use-actors-to-allow-parallel-reads-but-block-concurrent-reads-and-writes/77462072#comment141064729_77462072).
 
-I've implemented two variants of Conditions. A second one due to https://losingfight.com/blog/2024/04/14/modeling-condition-variables-in-swift-asyncawait/. Initial performance tests indicate those stream-based conditions perform better than my initial task-based conditions.
+I've implemented three variants of Conditions. One variant is based on sleeping Task's, a second one is stream-based from the idea in https://losingfight.com/blog/2024/04/14/modeling-condition-variables-in-swift-asyncawait/, and the third one uses `withCheckedContinuation`. Initial performance tests indicate the Checked Continuation-based conditions perform better than the other two strategies. Here's a sample output from the performance test:
+```
+Test Suite 'Selected tests' started at 2026-07-10 16:40:14.995.
+Test Suite 'ConditionsTests.xctest' started at 2026-07-10 16:40:14.995.
+Test Suite 'ConditionsTests.xctest' passed at 2026-07-10 16:40:14.995.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'Selected tests' passed at 2026-07-10 16:40:14.995.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+◇ Test run started.
+↳ Testing Library Version: 1501
+↳ Target Platform: arm64-apple-ios13.0-simulator
+◇ Suite ConditioningPerformanceTests started.
+◇ Test singleWaiterThroughputComparison() started.
+
+==== Conditioning Performance: Single-Waiter Throughput ====
+Iterations measured: 50 (+ 5 warm-up, discarded)
+Settle delay per iteration: 0.02 seconds (untimed; ensures waiter registration)
+
+ContinuationCondition:   33.29 µs/op  (fastest)
+StreamCondition      :   52.06 µs/op  1.56x slower
+TaskCondition        :  102.26 µs/op  3.07x slower
+==============================================================
+✔ Test singleWaiterThroughputComparison() passed after 3.779 seconds.
+✔ Suite ConditioningPerformanceTests passed after 3.779 seconds.
+✔ Test run with 1 test in 1 suite passed after 3.780 seconds.
+Program ended with exit code: 0
+```
 
 NOTES:
 * While https://developer.apple.com/videos/play/wwdc2021/10254/ suggests conditions should not be used, the conditions in the current Swift package are not `pthread_cond` or `NSCondition` conditions and are instead implemented as actors.
