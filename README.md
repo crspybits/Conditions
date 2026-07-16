@@ -51,4 +51,4 @@ Program ended with exit code: 0
 ```
 
 NOTES:
-* While https://developer.apple.com/videos/play/wwdc2021/10254/ suggests conditions should not be used, the conditions in the current Swift package are not `pthread_cond` or `NSCondition` conditions and are instead implemented as actors.
+* While https://developer.apple.com/videos/play/wwdc2021/10254/ suggests conditions should not be used, the conditions in the current Swift package are not `pthread_cond` or `NSCondition` conditions and are instead implemented as actors and other Swift primitives or Swift/Apple SDK methods.
